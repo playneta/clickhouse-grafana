@@ -206,4 +206,16 @@ describe("scanner:", () => {
     });
   });
 
+  describe("AST case 5", () => {
+    var query = "$event('league_points', sum('weight'))",
+        scanner = new Scanner(query);
+
+    it("expects equality", () => {
+      expect(scanner.toAST()).to.eql({
+        "root": [],
+        "$event": ["'league_points'", "sum('weight')"],
+        "select": []
+      });
+    });
+  });
 });

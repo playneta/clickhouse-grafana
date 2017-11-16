@@ -38,6 +38,9 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', './scanner'], fu
                         else if (ast.hasOwnProperty('$rate') && !lodash_1.default.isEmpty(ast['$rate'])) {
                             query = SqlQuery.rate(query, ast);
                         }
+                        else if (ast.hasOwnProperty('$event') && !lodash_1.default.isEmpty(ast['$event'])) {
+                            query = SqlQuery.event(query);
+                        }
                     }
                     catch (err) {
                         console.log("Parse error: ", err);
@@ -54,6 +57,24 @@ System.register(['lodash', 'app/core/utils/datemath', 'moment', './scanner'], fu
                         .replace(/\$interval/g, interval)
                         .replace(/(?:\r\n|\r|\n)/g, ' ');
                     return this.target.rawQuery;
+                };
+                SqlQuery.event = function (query) {
+                    if (query.slice(0, 7) === '$event(') {
+                        var args = query.slice(7)
+                            .trim()
+                            .slice(0, -1), scanner = new scanner_1.default(args), ast = scanner.toAST();
+                        var root = ast['root'];
+                        if (root.length === 0) {
+                            throw { message: 'Amount of arguments must more than 1 for $event func. Parsed arguments are: ' + root.join(', ') };
+                        }
+                        query = SqlQuery._event(root[0], root[1]);
+                    }
+                    return query;
+                };
+                SqlQuery._event = function (event, aggregation) {
+                    if (aggregation === void 0) { aggregation = 'count()'; }
+                    aggregation = aggregation.replace(/__\w+/ig, function (section) { return event + section; });
+                    return "\n      SELECT\n        $timeSeries as t,\n        " + aggregation + " AS a\n\n      FROM $table\n      WHERE $timeFilter\n        AND event = '" + event + "'\n\n      GROUP BY t\n      ORDER BY t\n    ";
                 };
                 // $columns(query)
                 SqlQuery.columns = function (query) {

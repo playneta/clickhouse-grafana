@@ -1,7 +1,7 @@
 {
-  "id": "vertamedia-clickhouse-datasource",
+  "id": "playneta-clickhouse-grafana",
   "type": "datasource",
-  "name": "ClickHouse",
+  "name": "Playneta ClickHouse",
 
   "metrics": true,
   "annotations": false,
@@ -10,8 +10,8 @@
   "info": {
     "description": "ClickHouse datasource for Grafana",
     "author": {
-      "name": "Vertamedia",
-      "url": "https://vertamedia.com/"
+      "name": "Playneta",
+      "url": "https://playneta.gg/"
     },
     "keywords": ["clickhouse"],
     "logos": {
@@ -21,7 +21,7 @@
     "links": [
       {
         "name": "GitHub",
-        "url": "https://github.com/Vertamedia/clickhouse-grafana"
+        "url": "https://github.com/playneta/playneta-clickhouse-grafana"
       }
     ],
     "version": "1.2.0"

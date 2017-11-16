@@ -1,12 +1,13 @@
 /// <reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 export default class SqlQuery {
     target: any;
-    queryBuilder: any;
     templateSrv: any;
     options: any;
     /** @ngInject */
     constructor(target: any, templateSrv?: any, options?: any);
     replace(options?: any): any;
+    static event(query: string): string;
+    static _event(event: string, aggregation?: string): string;
     static columns(query: string): string;
     static _columns(key: string, value: string, fromQuery: string): string;
     static rateColumns(query: string): string;
