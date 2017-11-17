@@ -1,0 +1,9 @@
+project:
+
+  docker:
+    base: playneta/statistics
+    images:
+      grafana:
+        checksum: 4e6b12fc1b5fe395978ba7739947c50d
+        context: app/
+        version: 0.1.16
