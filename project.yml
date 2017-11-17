@@ -4,6 +4,6 @@ project:
     base: playneta/statistics
     images:
       grafana:
-        checksum: 0b64f00a1fd5d0149d4aa37a64060141
+        checksum: 20803ad833194e3eb16f9afe418d025f
         context: app/dist
-        version: 0.1.17
+        version: 0.1.26

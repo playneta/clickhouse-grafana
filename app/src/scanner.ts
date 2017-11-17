@@ -225,7 +225,7 @@ var wsRe = "\\s+",
     statementRe = "(select|from|where|having|order by|group by|limit|format|prewhere|union all)",
     joinsRe = "(any inner join|any left join|all inner join|all left join" +
         "|global any inner join|global any left join|global all inner join|global all left join)",
-    macroFuncRe = "(\\$rateColumns|\\$rate|\\$columns|\\$event)",
+    macroFuncRe = "(\\$rateColumns|\\$rate|\\$columns|\\$events|\\$segments)",
     condRe = "\\b(or|and)\\b",
     inRe = "\\b(global in|global not in|not in|in)\\b",
     closureRe = "[\\(\\)]",
@@ -441,9 +441,14 @@ function print(AST, tab = '') {
     result += printItems(AST.$rateColumns, tab, ',') + ')';
   }
 
-  if (isSet(AST, '$event')) {
-    result += tab + '$event(';
-    result += printItems(AST.$event, tab, ',') + ')';
+  if (isSet(AST, '$events')) {
+    result += tab + '$events(';
+    result += printItems(AST.$events, tab, ',') + ')';
+  }
+
+  if (isSet(AST, '$segments')) {
+    result += tab + '$segments(';
+    result += printItems(AST.$segments, tab, ',') + ')';
   }
 
   if (isSet(AST, 'select')) {

@@ -169,7 +169,8 @@ ace.define("ace/mode/clickhouse_info", ["require", "exports", "module"], functio
     "$rate",
     "$columns",
     "$rateColumns",
-    "$event"
+    "$events",
+    "$segments"
   ];
   p.KeywordsRe = function () {
     return this.re(p.Keywords)
@@ -262,9 +263,9 @@ ace.define("ace/mode/clickhouse_info", ["require", "exports", "module"], functio
       {
         "name": "sequenceMatch",
         "def": "sequenceMatch(pattern)(time, cond1, cond2, ...)",
-        "docText": "Pattern matching for event chains.\n" +
+        "docText": "Pattern matching for events chains.\n" +
         "\n" +
-        "'pattern' is a string containing a pattern to match. The pattern is similar to a regular expression. 'time' is the event time of the DateTime type. 'cond1, cond2 ...' are from one to 32 arguments of the UInt8 type that indicate whether an event condition was met.\n" +
+        "'pattern' is a string containing a pattern to match. The pattern is similar to a regular expression. 'time' is the events time of the DateTime type. 'cond1, cond2 ...' are from one to 32 arguments of the UInt8 type that indicate whether an events condition was met.\n" +
         "\n" +
         "The function collects a sequence of events in RAM. Then it checks whether this sequence matches the pattern. It returns UInt8 - 0 if the pattern isn't matched, or 1 if it matches.\n" +
         "\n" +
@@ -1890,7 +1891,7 @@ ace.define("ace/mode/clickhouse_info", ["require", "exports", "module"], functio
       {
         "name": "match",
         "def": "match(pattern)(time, cond1, cond2, ...)",
-        "docText": "Pattern matching for event chains. \n" +
+        "docText": "Pattern matching for events chains. \n" +
         "\n" +
         " `pattern` is a string containing a pattern to match. The pattern is similar to a regular expression."
       },
@@ -2105,11 +2106,18 @@ ace.define("ace/mode/clickhouse_info", ["require", "exports", "module"], functio
         "Example:\n $rate(countIf(Type = 200) AS good, countIf(Type != 200) AS bad) FROM requests"
       },
       {
-        "name": "$event",
-        "def": "$event(название_события, [агрегирующее_выражение])",
+        "name": "$events",
+        "def": "$events(название_события, [агрегирующее_выражение])",
         "docText": "Запрос истории агрегированых событий, по умолчанию `count()`. Имя среза задается парой `_`." +
         "\n" +
-        "Пример:\n `$event(league_points, sum(__weight))`."
+        "Пример:\n `$events(league_points, sum(__weight))`."
+      },
+      {
+        "name": "$segments",
+        "def": "$segments(название_события, колонка_разбиения, [агрегирующее_выражение])",
+        "docText": "Запрос истории агрегированых событий разбитых по срезу." +
+        "\n" +
+        "Пример:\n `$segments(league_points, __val, sum(__weight))`."
       },
       {
         "name": "$columns",

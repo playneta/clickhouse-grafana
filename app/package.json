@@ -1,12 +1,12 @@
 {
-    "name": "vertamedia-clickhouse",
+    "name": "playneta-clickhouse",
     "version": "1.2.0",
     "description": "ClickHouse datasource for Grafana",
     "scripts": {
         "build": "grunt",
         "test": "./node_modules/karma/bin/karma start"
     },
-    "author": "Vertamedia",
+    "author": "Playneta",
     "license": "MIT",
     "dependencies": {
         "babel-plugin-transform-es2015-for-of": "^6.6.0",

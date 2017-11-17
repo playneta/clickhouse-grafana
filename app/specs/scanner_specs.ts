@@ -207,13 +207,27 @@ describe("scanner:", () => {
   });
 
   describe("AST case 5", () => {
-    const query = "$event(league_points, sum(__weight))",
-          scanner = new Scanner(query);
+    const query = "$events(league_points, sum(__weight)) WHERE 1 == 1",
+        scanner = new Scanner(query);
 
     it("expects equality", () => {
       expect(scanner.toAST()).to.eql({
         "root": [],
-        "$event": ["league_points", "sum(__weight)"],
+        "$events": ["league_points", "sum(__weight)"],
+        "select": [],
+        "where": ['1 == 1']
+      });
+    });
+  });
+
+  describe("AST case 5", () => {
+    const query = "$segments(league_points, __val, sum(__weight))",
+        scanner = new Scanner(query);
+
+    it("expects equality", () => {
+      expect(scanner.toAST()).to.eql({
+        "root": [],
+        "$segments": ["league_points", "__val", "sum(__weight)"],
         "select": []
       });
     });

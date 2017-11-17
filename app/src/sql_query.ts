@@ -275,8 +275,14 @@ export default class SqlQuery {
         query = SqlQuery.rateColumns(query);
       } else if (ast.hasOwnProperty('$rate') && !_.isEmpty(ast['$rate'])) {
         query = SqlQuery.rate(query, ast);
-      } else if (ast.hasOwnProperty('$event') && !_.isEmpty(ast['$event'])) {
-        query = this.event(options, query);
+      } else if (ast.hasOwnProperty('$events') && !_.isEmpty(ast['$events'])) {
+        console.log(ast);
+
+        query = this.events(options, ast['$events'], ast['where'] || []);
+      } else if (ast.hasOwnProperty('$segments') && !_.isEmpty(ast['$segments'])) {
+        console.log(ast);
+
+        query = this.segments(options, ast['$segments'], ast['where'] || []);
       }
     } catch (err) {
       console.log("Parse error: ", err);
@@ -298,40 +304,50 @@ export default class SqlQuery {
     return this.target.rawQuery;
   }
 
-  event(options, query: string): string {
-    if (query.slice(0, 7) === '$event(') {
-      const args = query.slice(7)
-              .trim()
-              .slice(0, -1),
-          scanner = new Scanner(args),
-          ast = scanner.toAST();
+  segments(options: any, call: string[], where: string[]): string {
+    const whereClause = where.length ? 'AND (' + where.join(' ') + ')' : '';
 
-      const root = ast['root'];
-
-      if (root.length === 0) {
-        throw {message: 'Amount of arguments must more than 1 for $event func. Parsed arguments are: ' + root.join(', ')};
-      }
-
-      query = this._event(options, root[0], root[1]);
-    }
-
-    return query;
-  }
-
-  _event(options, event: string, aggregation = 'count()'): string {
-    event = this.templateSrv.replace(event, options.scopedVars);
-    aggregation = aggregation.replace(/__\w+/ig,
-        section => event + section);
+    const event = this.templateSrv.replace(call[0], options.scopedVars);
+    const section = event + call[1];
+    const aggregation = call[2] || 'count()';
 
     return `
-        SELECT
-          $timeSeries as t,
-          ${ aggregation } AS ${ event }
-        FROM $table
-        WHERE $timeFilter
-          AND event = '${ event }'
-        GROUP BY t
-        ORDER BY t
-      `;
+      SELECT tick, groupArray((section, value)) AS pair
+      FROM (
+         SELECT
+            $timeSeries as tick,
+            ${ section } AS section,
+            ${ aggregation.replace(/__\w+/ig, s => event + s) } AS value
+         FROM $table
+         WHERE $timeFilter
+           AND event = '${ event }'
+           ${ whereClause }
+         GROUP BY tick, section
+         ORDER BY tick
+      )
+      GROUP BY tick
+      ORDER BY tick
+    `;
+  }
+
+
+
+  events(options, call: string[], where: string[]): string {
+    const whereClause = where.length ? 'AND (' + where.join(' ') + ')' : '';
+
+    const event = this.templateSrv.replace(call[0], options.scopedVars);
+    const aggregation = call[1] || 'count()';
+
+    return `
+      SELECT
+        $timeSeries as tick,
+        ${ aggregation } AS ${ event }
+      FROM $table
+      WHERE $timeFilter
+        AND event = '${ event }'
+            ${ whereClause }
+      GROUP BY tick
+      ORDER BY tick
+    `;
   }
 }
