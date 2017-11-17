@@ -170,7 +170,8 @@ ace.define("ace/mode/clickhouse_info", ["require", "exports", "module"], functio
     "$columns",
     "$rateColumns",
     "$events",
-    "$segments"
+    "$segments",
+    "$filter"
   ];
   p.KeywordsRe = function () {
     return this.re(p.Keywords)
@@ -2118,6 +2119,13 @@ ace.define("ace/mode/clickhouse_info", ["require", "exports", "module"], functio
         "docText": "Запрос истории агрегированых событий разбитых по срезу." +
         "\n" +
         "Пример:\n `$segments(league_points, __val, sum(__weight))`."
+      },
+      {
+        "name": "$filter",
+        "def": "$filter(...[колонка] IN $переменная)",
+        "docText": "Упрощенная нотация пересечения условий." +
+        "\n" +
+        "Пример:\n `$filter(__plt IN $platform, __val IN $ids)`."
       },
       {
         "name": "$columns",

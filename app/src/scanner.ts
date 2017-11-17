@@ -110,6 +110,14 @@ export default class Scanner {
         ast[rootToken] = toAST(subQuery);
         this._s = this._s.substring(subQuery.length + 1);
       }
+      else if (isCond(this.token) && (rootToken === 'where' || rootToken === 'prewhere')) {
+        if (isClosured(argument)) {
+          ast[rootToken].push(argument);
+          argument = this.token;
+        } else {
+          argument += ' ' + this.token;
+        }
+      }
       else if (isMacroFunc(this.token)) {
         var func = this.token;
         if (!this.next()) {
@@ -150,14 +158,6 @@ export default class Scanner {
             argument = '';
           }
           this._s = this._s.substring(subQuery.length + 1);
-        } else {
-          argument += ' ' + this.token;
-        }
-      }
-      else if (isCond(this.token) && (rootToken === 'where' || rootToken === 'prewhere')) {
-        if (isClosured(argument)) {
-          ast[rootToken].push(argument);
-          argument = this.token;
         } else {
           argument += ' ' + this.token;
         }
@@ -225,7 +225,7 @@ var wsRe = "\\s+",
     statementRe = "(select|from|where|having|order by|group by|limit|format|prewhere|union all)",
     joinsRe = "(any inner join|any left join|all inner join|all left join" +
         "|global any inner join|global any left join|global all inner join|global all left join)",
-    macroFuncRe = "(\\$rateColumns|\\$rate|\\$columns|\\$events|\\$segments)",
+    macroFuncRe = "(\\$rateColumns|\\$rate|\\$columns|\\$events|\\$segments|\\$filter)",
     condRe = "\\b(or|and)\\b",
     inRe = "\\b(global in|global not in|not in|in)\\b",
     closureRe = "[\\(\\)]",
@@ -449,6 +449,11 @@ function print(AST, tab = '') {
   if (isSet(AST, '$segments')) {
     result += tab + '$segments(';
     result += printItems(AST.$segments, tab, ',') + ')';
+  }
+
+  if (isSet(AST, '$filter')) {
+    result += tab + '\n\n$filter(';
+    result += printItems(AST.$filter, tab, ',') + ')';
   }
 
   if (isSet(AST, 'select')) {

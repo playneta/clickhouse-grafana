@@ -207,20 +207,20 @@ describe("scanner:", () => {
   });
 
   describe("AST case 5", () => {
-    const query = "$events(league_points, sum(__weight)) WHERE 1 == 1",
+    const query = "$events(league_points, sum(__weight)) $filter(__plt IN $platform, __val IN $ids)",
         scanner = new Scanner(query);
 
     it("expects equality", () => {
       expect(scanner.toAST()).to.eql({
         "root": [],
         "$events": ["league_points", "sum(__weight)"],
+        "$filter": ["__plt IN $platform", "__val IN $ids"],
         "select": [],
-        "where": ['1 == 1']
       });
     });
   });
 
-  describe("AST case 5", () => {
+  describe("AST case 6", () => {
     const query = "$segments(league_points, __val, sum(__weight))",
         scanner = new Scanner(query);
 
@@ -228,6 +228,19 @@ describe("scanner:", () => {
       expect(scanner.toAST()).to.eql({
         "root": [],
         "$segments": ["league_points", "__val", "sum(__weight)"],
+        "select": []
+      });
+    });
+  });
+
+  describe("AST case 6", () => {
+    const query = "$filter(__plt IN $platform, __val IN $ids)",
+        scanner = new Scanner(query);
+
+    it("expects equality", () => {
+      expect(scanner.toAST()).to.eql({
+        "root": [],
+        "$filter": ["__plt IN $platform", "__val IN $ids"],
         "select": []
       });
     });

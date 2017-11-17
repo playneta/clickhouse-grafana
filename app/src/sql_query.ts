@@ -278,11 +278,11 @@ export default class SqlQuery {
       } else if (ast.hasOwnProperty('$events') && !_.isEmpty(ast['$events'])) {
         console.log(ast);
 
-        query = this.events(options, ast['$events'], ast['where'] || []);
+        query = this.events(options, ast['$events'], ast['$filter'] || []);
       } else if (ast.hasOwnProperty('$segments') && !_.isEmpty(ast['$segments'])) {
         console.log(ast);
 
-        query = this.segments(options, ast['$segments'], ast['where'] || []);
+        query = this.segments(options, ast['$segments'], ast['$filter'] || []);
       }
     } catch (err) {
       console.log("Parse error: ", err);
@@ -304,12 +304,18 @@ export default class SqlQuery {
     return this.target.rawQuery;
   }
 
-  segments(options: any, call: string[], where: string[]): string {
-    const whereClause = where.length ? 'AND (' + where.join(' ') + ')' : '';
-
+  segments(options: any, call: string[], filter: string[]): string {
     const event = this.templateSrv.replace(call[0], options.scopedVars);
     const section = event + call[1];
     const aggregation = call[2] || 'count()';
+    const whereClause = filter.length === 0 ? '' : 'AND (' + filter.map((expr) => {
+
+      return this.templateSrv.replace(expr, options.scopedVars, (value, variable) => {
+        return '(' + [].concat(value).map(
+            (v) => SqlQuery.clickhouseEscape(v, variable)).join(',') + ')';
+      }).replace(/__\w+/ig, s => event + s);
+
+    }).filter(e => e.length > 0).join(' AND ') + ')';
 
     return `
       SELECT tick, groupArray((section, value)) AS pair
@@ -330,11 +336,7 @@ export default class SqlQuery {
     `;
   }
 
-
-
-  events(options, call: string[], where: string[]): string {
-    const whereClause = where.length ? 'AND (' + where.join(' ') + ')' : '';
-
+  events(options, call: string[], filter: string[]): string {
     const event = this.templateSrv.replace(call[0], options.scopedVars);
     const aggregation = call[1] || 'count()';
 
@@ -345,9 +347,9 @@ export default class SqlQuery {
       FROM $table
       WHERE $timeFilter
         AND event = '${ event }'
-            ${ whereClause }
       GROUP BY tick
       ORDER BY tick
     `;
   }
+
 }
