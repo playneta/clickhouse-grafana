@@ -1,15 +1,15 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import angular from 'angular';
-import _ from 'lodash';
+import * as  _ from 'lodash';
 
-import SqlSeries from './sql_series';
+import * as  SqlSeries from './sql_series';
 import SqlQuery from './sql_query';
 import ResponseParser from './response_parser';
 
 /** @ngInject */
 export function ClickHouseDatasource(instanceSettings, $q, backendSrv, templateSrv) {
-    this.type = 'clickhouse';
+    this.type = 'playneta-clickhouse';
     this.name = instanceSettings.name;
     this.supportMetrics = true;
     this.responseParser = new ResponseParser();

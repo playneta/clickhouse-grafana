@@ -1,41 +1,27 @@
-System.register(["./datasource", "./query_ctrl"], function (exports_1, context_1) {
-    "use strict";
-    var __moduleName = context_1 && context_1.id;
-    var datasource_1, query_ctrl_1, SqlConfigCtrl, SqlQueryOptionsCtrl, SqlAnnotationsQueryCtrl;
-    return {
-        setters: [
-            function (datasource_1_1) {
-                datasource_1 = datasource_1_1;
-            },
-            function (query_ctrl_1_1) {
-                query_ctrl_1 = query_ctrl_1_1;
-            }
-        ],
-        execute: function () {
-            exports_1("Datasource", datasource_1.ClickHouseDatasource);
-            exports_1("QueryCtrl", query_ctrl_1.SqlQueryCtrl);
-            SqlConfigCtrl = (function () {
-                function SqlConfigCtrl() {
-                }
-                SqlConfigCtrl.templateUrl = 'partials/config.html';
-                return SqlConfigCtrl;
-            }());
-            exports_1("ConfigCtrl", SqlConfigCtrl);
-            SqlQueryOptionsCtrl = (function () {
-                function SqlQueryOptionsCtrl() {
-                }
-                SqlQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
-                return SqlQueryOptionsCtrl;
-            }());
-            exports_1("QueryOptionsCtrl", SqlQueryOptionsCtrl);
-            SqlAnnotationsQueryCtrl = (function () {
-                function SqlAnnotationsQueryCtrl() {
-                }
-                SqlAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html';
-                return SqlAnnotationsQueryCtrl;
-            }());
-            exports_1("AnnotationsQueryCtrl", SqlAnnotationsQueryCtrl);
-        }
-    };
-});
-//# sourceMappingURL=module.js.map
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var datasource_1 = require("./datasource");
+exports.Datasource = datasource_1.ClickHouseDatasource;
+var query_ctrl_1 = require("./query_ctrl");
+exports.QueryCtrl = query_ctrl_1.SqlQueryCtrl;
+var SqlConfigCtrl = (function () {
+    function SqlConfigCtrl() {
+    }
+    SqlConfigCtrl.templateUrl = 'partials/config.html';
+    return SqlConfigCtrl;
+}());
+exports.ConfigCtrl = SqlConfigCtrl;
+var SqlQueryOptionsCtrl = (function () {
+    function SqlQueryOptionsCtrl() {
+    }
+    SqlQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
+    return SqlQueryOptionsCtrl;
+}());
+exports.QueryOptionsCtrl = SqlQueryOptionsCtrl;
+var SqlAnnotationsQueryCtrl = (function () {
+    function SqlAnnotationsQueryCtrl() {
+    }
+    SqlAnnotationsQueryCtrl.templateUrl = 'partials/annotations.editor.html';
+    return SqlAnnotationsQueryCtrl;
+}());
+exports.AnnotationsQueryCtrl = SqlAnnotationsQueryCtrl;

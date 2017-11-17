@@ -1,5 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
-import _ from 'lodash';
+import * as  _ from 'lodash';
 
 export default class ResponseParser {
 

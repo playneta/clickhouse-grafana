@@ -1,12 +1,12 @@
 ///<reference path="../../../headers/common.d.ts" />app/core
 
 import angular from 'angular';
-import $ from 'jquery';
-import _ from 'lodash';
-import SqlQueryBuilder from './query_builder';
+import * as $ from 'jquery';
+import * as  _ from 'lodash';
+import * as SqlQueryBuilder from './query_builder';
 import SqlQuery from './sql_query';
 import {QueryCtrl} from 'app/plugins/sdk';
-import Scanner from './scanner';
+import * as Scanner from './scanner';
 
 class SqlQueryCtrl extends QueryCtrl {
     static templateUrl = 'partials/query.editor.html';

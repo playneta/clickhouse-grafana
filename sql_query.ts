@@ -1,9 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from 'lodash';
+import * as _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
-import moment from 'moment';
-import Scanner from './scanner';
+import * as moment from 'moment';
+import * as Scanner from './scanner';
 
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
@@ -39,7 +39,10 @@ export default class SqlQuery {
                 query = SqlQuery.rateColumns(query);
             } else if (ast.hasOwnProperty('$rate') && !_.isEmpty(ast.$rate)) {
                 query = SqlQuery.rate(query, ast);
+            } else if (ast.hasOwnProperty('$event') && !_.isEmpty(ast.$event)) {
+                query = this.event(options, query);
             }
+
         } catch (err) {
             console.log("Parse error: ", err);
         }
@@ -55,7 +58,44 @@ export default class SqlQuery {
                     .replace(/\$dateTimeCol/g, this.target.dateTimeColDataType)
                     .replace(/\$interval/g, interval)
                     .replace(/(?:\r\n|\r|\n)/g, ' ');
+
         return this.target.rawQuery;
+    }
+
+    event(options, query: string): string {
+      if (query.slice(0, 7) === '$event(') {
+        var args = query.slice(7)
+                .trim()
+                .slice(0, -1),
+            scanner = new Scanner(args),
+            ast = scanner.toAST();
+        var root = ast['root'];
+
+        if (root.length === 0) {
+          throw {message: 'Amount of arguments must more than 1 for $event func. Parsed arguments are: ' + root.join(', ')};
+        }
+
+        query = this._event(options, root[0], root[1]);
+      }
+
+      return query;
+    }
+
+    _event(options, event: string, aggregation = 'count()'): string {
+      event = this.templateSrv.replace(event, options.scopedVars)
+      aggregation = aggregation.replace(/__\w+/ig,
+              section => event + section);
+
+      return `
+        SELECT
+          $timeSeries as t,
+          ${ aggregation } AS ${ event }
+        FROM $table
+        WHERE $timeFilter
+          AND event = '${ event }'
+        GROUP BY t
+        ORDER BY t
+      `;
     }
 
     // $columns(query)

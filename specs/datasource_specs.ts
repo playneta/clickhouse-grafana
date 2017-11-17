@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as  _ from 'lodash';
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 import SqlSeries from './../sql_series';
 

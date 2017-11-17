@@ -57,6 +57,12 @@
                     <b>$rateColumns(key, value)</b> - is an combination of $columns and $rate.<br/>
                     Example usage: $rateColumns(Type, count() c) FROM requests
                 </li>
+                <li>
+                    <b>$event(название_события, [агрегирующее_выражение])</b> - Запрос истории агрегированых событий, по умолчанию `count()`. Имя среза задается парой `_`.<br/>
+                    Пример:\n `$event(league_points, sum(__weight))`.
+                </li>
+
+
             </ul>
         </div>
 

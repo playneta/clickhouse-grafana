@@ -266,6 +266,11 @@ define([
         result += printItems(AST.$rateColumns, tab, ',') + ')';
       }
 
+      if (isSet(AST,'$event')) {
+        result += tab + '$event(';
+        result += printItems(AST.$event, tab, ',') + ')';
+      }
+
       if (isSet(AST, 'select')) {
         result += tab + 'SELECT';
         result += printItems(AST.select, tab, ',');
@@ -364,7 +369,7 @@ define([
       statementRe = "(select|from|where|having|order by|group by|limit|format|prewhere|union all)",
       joinsRe = "(any inner join|any left join|all inner join|all left join"+
         "|global any inner join|global any left join|global all inner join|global all left join)",
-      macroFuncRe = "(\\$rateColumns|\\$rate|\\$columns)",
+      macroFuncRe = "(\\$rateColumns|\\$rate|\\$columns|\\$event)",
       condRe = "\\b(or|and)\\b",
       inRe = "\\b(global in|global not in|not in|in)\\b",
       closureRe = "[\\(\\)]",
