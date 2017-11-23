@@ -333,7 +333,7 @@ export default class SqlQuery {
     return `
       SELECT
         $timeSeries as tick,
-        ${ aggregation } AS ${ event }
+        ${ aggregation.replace(/__\w+/ig, s => event + s) } AS ${ event }
       FROM $table
       WHERE $timeFilter
         AND event = '${ event }'
