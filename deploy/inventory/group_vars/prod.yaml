@@ -1,0 +1,11 @@
+project:
+  name: grafana
+
+  versions:
+    app: playneta/grafana:main-0.1.3
+
+  party:
+    - name: app
+      volumes:
+        - /home/grafana/.lib:/var/lib/grafana
+        - /home/grafana/.etc/grafana.ini:/etc/grafana/grafana.ini

@@ -1,0 +1,11 @@
+- src: https://nexus-sonatype.playneta.gg/nexus/content/sites/ansible-galaxy/daemon-party-0.3.2.tar.gz
+  name: daemon-party
+  version: 0.3.2
+
+- src: https://nexus-sonatype.playneta.gg/nexus/content/sites/ansible-galaxy/nginx-scene-0.3.2.tar.gz
+  name: nginx-scene
+  version: 0.3.2
+
+- src: https://nexus-sonatype.playneta.gg/nexus/content/sites/ansible-galaxy/playneta-project-0.3.2.tar.gz
+  name: playneta-project
+  version: 0.3.2
