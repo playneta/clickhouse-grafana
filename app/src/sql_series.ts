@@ -78,47 +78,10 @@ export default class SqlSeries {
         }
         datapoints.push([self._formatValue(metrics[k][interval]), interval]);
       });
-      timeSeries.push({target: k, datapoints: self.extrapolate(datapoints)});
+      timeSeries.push({target: k, datapoints});
     });
 
     return timeSeries;
-  };
-
-  extrapolate(datapoints) {
-    if (datapoints.length < 10 || (!this.tillNow && datapoints[0][0] !== 0)) {
-      return datapoints;
-    }
-
-    // Duration between first/last samples and boundary of range.
-    var durationToStart = datapoints[0][1] / 1000 - this.from,
-        durationToEnd = this.to - datapoints[datapoints.length - 1][1] / 1000;
-
-    // If the first/last samples are close to the boundaries of the range,
-    // extrapolate the result.
-    var sampledInterval = (datapoints[datapoints.length - 1][1] - datapoints[0][1]) / 1000,
-        averageDurationBetweenSamples = sampledInterval / (datapoints.length - 1);
-
-    var diff;
-    // close to left border and value is 0 because of runningDifference function
-    if (durationToStart < averageDurationBetweenSamples && datapoints[0][0] === 0) {
-      diff = ((datapoints[1][0] - datapoints[2][0]) / datapoints[1][0]) * 0.1;
-      diff %= 1;
-      if (isNaN(diff)) {
-        diff = 0;
-      }
-      datapoints[0][0] = datapoints[1][0] * (1 + diff);
-    }
-
-    if (durationToEnd < averageDurationBetweenSamples) {
-      diff = ((datapoints[datapoints.length - 2][0] - datapoints[datapoints.length - 3][0]) / datapoints[datapoints.length - 2][0]) * 0.1;
-      diff %= 1;
-      if (isNaN(diff)) {
-        diff = 0;
-      }
-      datapoints[datapoints.length - 1][0] = datapoints[datapoints.length - 2][0] * (1 + diff);
-    }
-
-    return datapoints;
   };
 
   _toJSType(type: any): string {
