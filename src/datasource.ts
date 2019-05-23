@@ -1,43 +1,58 @@
 ///<reference path="../node_modules/grafana-sdk-mocks/app/headers/common.d.ts" />
 
-import _ from 'lodash';
+import {curry, each, filter, isEmpty, map} from 'lodash-es';
 
 import SqlSeries from './sql_series';
 import SqlQuery from './sql_query';
 import ResponseParser from './response_parser';
+import AdhocCtrl from './adhoc';
+import Scanner from './scanner';
+
+const adhocFilterVariable = 'adhoc_query_filter';
 
 export class ClickHouseDatasource {
-  type: string;
-  name: string;
-  supportMetrics: boolean;
-  url: string;
-  directUrl: string;
-  basicAuth: any;
-  withCredentials: any;
-  usePOST: boolean;
-  addCorsHeader: boolean;
-  responseParser: any;
+    type: string;
+    name: string;
+    supportMetrics: boolean;
+    url: string;
+    directUrl: string;
+    basicAuth: any;
+    withCredentials: any;
+    usePOST: boolean;
+    defaultDatabase: string;
+    addCorsHeader: boolean;
+    responseParser: any;
+    adhocCtrl: AdhocCtrl;
+    xHeaderUser: string;
+    xHeaderKey: string;
+    useYandexCloudAuthorization: boolean;
 
     /** @ngInject */
     constructor(instanceSettings,
                 private $q,
                 private backendSrv,
                 private templateSrv) {
-      this.type = 'clickhouse';
-      this.name = instanceSettings.name;
-      this.supportMetrics = true;
-      this.responseParser = new ResponseParser();
-      this.url = instanceSettings.url;
-      this.directUrl = instanceSettings.directUrl;
-      this.basicAuth = instanceSettings.basicAuth;
-      this.withCredentials = instanceSettings.withCredentials;
-      this.addCorsHeader = instanceSettings.jsonData.addCorsHeader;
-      this.usePOST = instanceSettings.jsonData.usePOST;
+        this.type = 'clickhouse';
+        this.name = instanceSettings.name;
+        this.supportMetrics = true;
+        this.responseParser = new ResponseParser(this.$q);
+        this.url = instanceSettings.url;
+        this.directUrl = instanceSettings.directUrl;
+        this.basicAuth = instanceSettings.basicAuth;
+        this.withCredentials = instanceSettings.withCredentials;
+        this.addCorsHeader = instanceSettings.jsonData.addCorsHeader;
+        this.usePOST = instanceSettings.jsonData.usePOST;
+        this.defaultDatabase = instanceSettings.jsonData.defaultDatabase || '';
+        this.adhocCtrl = new AdhocCtrl(this);
+        this.xHeaderUser = instanceSettings.jsonData.xHeaderUser;
+        this.xHeaderKey = instanceSettings.jsonData.xHeaderKey;
+        this.useYandexCloudAuthorization = instanceSettings.jsonData.useYandexCloudAuthorization;
     }
 
-    _request(query) {
-        var options: any = {
-            url: this.url
+    _request(query: string, requestId?: string) {
+        let options: any = {
+            url: this.url,
+            requestId: requestId,
         };
 
         if (this.usePOST) {
@@ -57,12 +72,17 @@ export class ClickHouseDatasource {
             options.headers.Authorization = this.basicAuth;
         }
 
+        if (this.useYandexCloudAuthorization) {
+            options.headers['X-ClickHouse-User'] = this.xHeaderUser;
+            options.headers['X-ClickHouse-Key'] = this.xHeaderKey;
+        }
+
         if (this.addCorsHeader) {
-          if (this.usePOST) {
-            options.url += "?add_http_cors_header=1";
-          } else {
-            options.url += "&add_http_cors_header=1";
-          }
+            if (this.usePOST) {
+                options.url += "?add_http_cors_header=1";
+            } else {
+                options.url += "&add_http_cors_header=1";
+            }
         }
 
         return this.backendSrv.datasourceRequest(options).then(result => {
@@ -71,32 +91,27 @@ export class ClickHouseDatasource {
     };
 
     query(options) {
-        var queries = [], q;
-
-        _.map(options.targets, (target) => {
-            if (!target.hide && target.query) {
-                var queryModel = new SqlQuery(target, this.templateSrv, options);
-                q = queryModel.replace(options);
-                queries.push(q);
-            }
-        });
-
+        const queries = map(
+            filter(options.targets, target => !target.hide && target.query),
+            target => this.createQuery(options, target)
+        );
         // No valid targets, return the empty result to save a round trip.
-        if (_.isEmpty(queries)) {
+        if (isEmpty(queries)) {
             var d = this.$q.defer();
             d.resolve({data: []});
             return d.promise;
         }
 
-        var allQueryPromise = _.map(queries, query => {
-            return this._seriesQuery(query);
+        const allQueryPromise = map(queries, query => {
+            return this._seriesQuery(query.stmt, query.requestId);
         });
-
 
         return this.$q.all(allQueryPromise).then((responses): any => {
             var result = [], i = 0;
-            _.each(responses, (response) => {
-                var target = options.targets[i];
+            each(responses, (response) => {
+                const target = options.targets[i];
+                const keys = queries[i].keys;
+
                 i++;
                 if (!response || !response.rows) {
                     return;
@@ -105,16 +120,17 @@ export class ClickHouseDatasource {
                 var sqlSeries = new SqlSeries({
                     series: response.data,
                     meta: response.meta,
+                    keys: keys,
                     tillNow: options.rangeRaw.to === 'now',
                     from: SqlQuery.convertTimestamp(options.range.from),
                     to: SqlQuery.convertTimestamp(options.range.to)
                 });
                 if (target.format === 'table') {
-                    _.each(sqlSeries.toTable(), (data) => {
+                    each(sqlSeries.toTable(), (data) => {
                         result.push(data);
                     });
                 } else {
-                    _.each(sqlSeries.toTimeSeries(), (data) => {
+                    each(sqlSeries.toTimeSeries(), (data) => {
                         result.push(data);
                     });
                 }
@@ -123,16 +139,73 @@ export class ClickHouseDatasource {
         });
     };
 
-    metricFindQuery(query) {
-        var interpolated;
+    createQuery(options, target) {
+        const queryModel = new SqlQuery(target, this.templateSrv, options);
+        const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+        const stmt = queryModel.replace(options, adhocFilters);
+
+        let keys = [];
+
         try {
-            interpolated = this.templateSrv.replace(query, {}, SqlQuery.interpolateQueryExpr);
+            let queryAST = new Scanner(stmt).toAST();
+            keys = queryAST['group by'] || [];
+        } catch (err) {
+            console.log('AST parser error: ', err)
+        }
+
+        return {
+            keys: keys,
+            requestId: options.panelId + target.refId,
+            stmt: stmt,
+        };
+    }
+
+    annotationQuery(options) {
+        if (!options.annotation.query) {
+            return this.$q.reject({
+                message: 'Query missing in annotation definition',
+            });
+        }
+
+        const params = Object.assign({
+            annotation: {
+                dateTimeColDataType: 'time'
+            },
+            interval: '30s'
+        }, options);
+        let queryModel;
+        let query;
+
+        queryModel = new SqlQuery(params.annotation, this.templateSrv, params);
+        queryModel = queryModel.replace(params, []);
+        query = queryModel.replace(/(?:\r\n|\r|\n)/g, ' ');
+        query += ' FORMAT JSON';
+
+        return this.backendSrv
+            .datasourceRequest({
+                url: this.url,
+                method: 'POST',
+                data: query
+            })
+            .then(result => this.responseParser.transformAnnotationResponse(params, result.data));
+    }
+
+    metricFindQuery(query: string, options?: any) {
+        let interpolatedQuery;
+
+        try {
+            interpolatedQuery = this.templateSrv.replace(query, {}, SqlQuery.interpolateQueryExpr);
         } catch (err) {
             return this.$q.reject(err);
         }
 
-        return this._seriesQuery(interpolated)
-            .then(_.curry(this.responseParser.parse)(query));
+        if (options && options.range) {
+            interpolatedQuery = SqlQuery.replaceTimeFilters(interpolatedQuery, options.range);
+        }
+
+        // todo(nv): fix request id
+        return this._seriesQuery(interpolatedQuery)
+            .then(curry(this.responseParser.parse)(query));
     };
 
     testDatasource() {
@@ -142,13 +215,30 @@ export class ClickHouseDatasource {
             });
     };
 
-    _seriesQuery(query) {
+    _seriesQuery(query: string, requestId?: string) {
         query = query.replace(/(?:\r\n|\r|\n)/g, ' ');
         query += ' FORMAT JSON';
-        return this._request(query);
+        return this._request(query, requestId);
     };
 
     targetContainsTemplate(target) {
         return this.templateSrv.variableExists(target.expr);
     };
+
+    getTagKeys() {
+        // check whether variable `adhoc_query_filter` exists to apply additional filtering
+        // @see https://github.com/Vertamedia/clickhouse-grafana/issues/75
+        // @see https://github.com/grafana/grafana/issues/13109
+        let queryFilter = '';
+        each(this.templateSrv.variables, (v) => {
+            if (v.name === adhocFilterVariable) {
+                queryFilter = v.query
+            }
+        });
+        return this.adhocCtrl.GetTagKeys(queryFilter);
+    }
+
+    getTagValues(options) {
+        return this.adhocCtrl.GetTagValues(options);
+    }
 }

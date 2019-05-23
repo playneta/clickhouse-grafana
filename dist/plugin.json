@@ -4,7 +4,7 @@
   "name": "ClickHouse",
 
   "metrics": true,
-  "annotations": false,
+  "annotations": true,
   "alerting": false,
 
   "info": {
@@ -24,6 +24,6 @@
         "url": "https://github.com/Vertamedia/clickhouse-grafana"
       }
     ],
-    "version": "1.2.0"
+    "version": "1.8.1"
   }
 }

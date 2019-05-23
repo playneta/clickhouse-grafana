@@ -33,14 +33,17 @@ ace.define("ace/mode/clickhouse_highlight_rules", ["require", "exports", "module
                 token: "string",           // ' string
                 regex: "'.*?'"
             }, {
+                token: "variable",
+                regex: "\\$\\w+"
+            }, {
+                token: "keyword.operator",
+                regex: "\\+|\\-|\\/|\\/\\/|%|<@>|@>|<@|&|\\^|~|<|>|<=|=>|==|!=|<>|=|\\?|:"
+            }, {
                 token: "constant.numeric", // float
                 regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
                 token: keywordMapper,
                 regex: "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
-            }, {
-                token: "keyword.operator",
-                regex: "\\+|\\-|\\/|\\/\\/|%|<@>|@>|<@|&|\\^|~|<|>|<=|=>|==|!=|<>|="
             }, {
                 token: "paren.lparen",
                 regex: "[\\(]"
@@ -75,6 +78,15 @@ ace.define("ace/mode/clickhouse_completions", ["require", "exports", "module", "
         }
     });
 
+    var constantCompletions = ClickhouseInfo.Constants.map(function (word) {
+        return {
+            caption: word,
+            value: word,
+            meta: "constant",
+            score: Number.MAX_VALUE
+        };
+    });
+
     var macrosCompletions = ClickhouseInfo.MacrosCompletions().map(function (item) {
         return {
             caption: item.name,
@@ -85,10 +97,11 @@ ace.define("ace/mode/clickhouse_completions", ["require", "exports", "module", "
         };
     });
 
+
     var functionsCompletions = ClickhouseInfo.FunctionsCompletions().map(function (item) {
         return {
             caption: item.name,
-            value: item.name+"()",
+            value: item.name + "()",
             docHTML: convertToHTML(item),
             meta: "function",
             score: Number.MAX_VALUE
@@ -105,7 +118,7 @@ ace.define("ace/mode/clickhouse_completions", ["require", "exports", "module", "
         for (var i = 0; i < str.length; i++) {
             if (str[i] === ' ') {
                 space_index = i;
-            } else if (i >= next_line_end  && space_index !== 0) {
+            } else if (i >= next_line_end && space_index !== 0) {
                 line = str.slice(line_start, space_index);
                 lines.push(line);
                 line_start = space_index + 1;
@@ -126,7 +139,7 @@ ace.define("ace/mode/clickhouse_completions", ["require", "exports", "module", "
 
     function convertToHTML(item) {
         var docText = lang.escapeHTML(item.docText);
-        docText = convertMarkDownTags(wrapText(docText, 40));
+        docText = convertMarkDownTags(wrapText(docText, 90));
         return [
             "<b>", lang.escapeHTML(item.def), "</b>", "<hr></hr>", docText, "<br>&nbsp"
         ].join("");
@@ -137,12 +150,7 @@ ace.define("ace/mode/clickhouse_completions", ["require", "exports", "module", "
 
     (function () {
         this.getCompletions = function (state, session, pos, prefix, callback) {
-            var token = session.getTokenAt(pos.row, pos.column);
-            if (token.type === 'entity.name.tag' || token.type === 'string.quoted') {
-                return callback(null, []);
-            }
-
-            var completions = keyWordsCompletions.concat(functionsCompletions);
+            var completions = keyWordsCompletions.concat(functionsCompletions).concat(constantCompletions);
             completions = completions.concat(macrosCompletions);
             callback(null, completions);
         };
