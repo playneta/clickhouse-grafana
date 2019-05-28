@@ -1,0 +1,9 @@
+project:
+
+  docker:
+    base: playneta/grafana
+    images:
+      main:
+        checksum: 56cbb2cc24e7318eda305c87577a2d07
+        context: app/dist
+        version: 0.1.4

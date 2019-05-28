@@ -1,0 +1,12 @@
+project:
+  name: grafana
+
+  versions:
+    app: playneta/grafana:main-0.1.11
+
+  party:
+    - name: app
+      ports: ["192.168.150.17:3000:3000"]
+      volumes:
+        - /home/grafana/.lib:/var/lib/grafana
+        - /home/grafana/.etc/grafana.ini:/etc/grafana/grafana.ini
